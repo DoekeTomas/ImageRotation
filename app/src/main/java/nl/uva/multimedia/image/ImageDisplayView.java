@@ -9,6 +9,7 @@ package nl.uva.multimedia.image;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -73,30 +74,61 @@ public class ImageDisplayView extends View implements ImageListener {
 
             /* Sla info per pixel op: [x, y, color] */
             for (int i = 0; i < pixelsNr; i++) {
-                pixels[i][0] = (i % imageWidth) - centerImageX;
+                pixels[i][0] = ((i % imageWidth) - centerImageX) * -1;
                 pixels[i][1] = (i / imageHeight) - centerImageY;
                 pixels[i][2] = currentImage[i];
             }
 
-            int degrees = 90;
+            double radians = Math.PI / 4;
 
+            int tmpX;
             /* Bereken de geroteerde x en y per pixel */
             for (int i = 0; i < pixelsNr; i++) {
-                pixels[i][0] = (int)(pixels[i][0] * Math.cos(degrees) - pixels[i][1] * Math.sin(degrees));
-                pixels[i][1] = (int)(pixels[i][0] * Math.sin(degrees) + pixels[i][1] * Math.cos(degrees));
+                tmpX = pixels[i][0];
+                pixels[i][0] = (int)((pixels[i][0] * Math.cos(radians)) + (pixels[i][1] * Math.sin(radians)));
+                pixels[i][1] = (int)((-tmpX * Math.sin(radians)) + (pixels[i][1] * Math.cos(radians)));
             }
+
+            int[] cornersX = {pixels[0][0], pixels[imageWidth - 1][0], pixels[pixelsNr - imageWidth][0], pixels[pixelsNr - 1][0]};
+            int[] cornersY = {pixels[0][1], pixels[imageWidth - 1][1], pixels[pixelsNr - imageWidth][1], pixels[pixelsNr - 1][1]};
+
+            int minX, maxX, minY, maxY;
+            minX = maxX = minY = maxY = 0;
+
+            for (int i = 0; i < 4; i++) {
+                if (cornersX[i] < minX) minX = cornersX[i];
+                if (cornersX[i] > maxX) maxX = cornersX[i];
+                if (cornersY[i] < minY) minY = cornersY[i];
+                if (cornersY[i] > maxY) maxY = cornersY[i];
+            }
+
+            int rotatedImageWidth = maxX - minX;
+            int rotatedImageHeight = maxY - minY;
+            int rotatedPixelsNr = rotatedImageWidth * (rotatedImageHeight + 10);
 
             Paint paint = new Paint();
+            paint.setTextSize(50);
+            paint.setColor(Color.RED);
 
+            //canvas.drawRect(centerCanvasX - rotatedImageWidth/2, centerCanvasY - rotatedImageHeight/2,
+                    //centerCanvasX + rotatedImageWidth/2, centerCanvasY + rotatedImageHeight/2 ,paint);
+
+            int[] currentImageRotated = new int[rotatedPixelsNr];
+
+            int rgbaX, rgbaY;
             for (int i = 0; i < pixelsNr; i++) {
-                paint.setColor(pixels[i][2]);
+                rgbaX = (pixels[i][0] - minX);
+                rgbaY = (pixels[i][1] - minY);
 
-                canvas.drawPoint(centerCanvasX - pixels[i][0],centerCanvasY - pixels[i][1], paint);
+                currentImageRotated[rgbaY * rotatedImageWidth + rgbaX] = pixels[i][2];
             }
 
-            /* ...and draw it.
-            canvas.drawBitmap(this.currentImage, 0, this.imageWidth, left, top, this.imageWidth,
-                    this.imageHeight, true, null);*/
+            /* Center afbeelding */
+            int left = centerCanvasX - rotatedImageWidth / 2;
+            int top = centerCanvasY - rotatedImageHeight / 2;
+
+            canvas.drawBitmap(currentImageRotated, 0, rotatedImageWidth, left, top, rotatedImageWidth,
+                    rotatedImageHeight, true, null);
         }
     }
 
