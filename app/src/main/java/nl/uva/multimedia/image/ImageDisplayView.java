@@ -9,8 +9,12 @@ package nl.uva.multimedia.image;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+
+import java.util.Arrays;
 
 /*
  * This is a View that displays incoming images.
@@ -55,13 +59,44 @@ public class ImageDisplayView extends View implements ImageListener {
 
         /* If there is an image to be drawn: */
         if (this.currentImage != null) {
-            /* Center the image... */
-            int left = (this.getWidth() - this.imageWidth) / 2;
-            int top = (this.getHeight() - this.imageHeight) / 2;
 
-            /* ...and draw it. */
+            /* Center van de canvas */
+            int centerCanvasX = this.getWidth() / 2;
+            int centerCanvasY = this.getHeight() / 2;
+
+            /* Center van de afbeelding */
+            int centerImageX = this.imageWidth / 2;
+            int centerImageY = this.imageHeight / 2;
+
+            int pixelsNr = this.imageWidth * this.imageHeight;
+            int[][] pixels = new int[pixelsNr][3];
+
+            /* Sla info per pixel op: [x, y, color] */
+            for (int i = 0; i < pixelsNr; i++) {
+                pixels[i][0] = (i % imageWidth) - centerImageX;
+                pixels[i][1] = (i / imageHeight) - centerImageY;
+                pixels[i][2] = currentImage[i];
+            }
+
+            int degrees = 90;
+
+            /* Bereken de geroteerde x en y per pixel */
+            for (int i = 0; i < pixelsNr; i++) {
+                pixels[i][0] = (int)(pixels[i][0] * Math.cos(degrees) - pixels[i][1] * Math.sin(degrees));
+                pixels[i][1] = (int)(pixels[i][0] * Math.sin(degrees) + pixels[i][1] * Math.cos(degrees));
+            }
+
+            Paint paint = new Paint();
+
+            for (int i = 0; i < pixelsNr; i++) {
+                paint.setColor(pixels[i][2]);
+
+                canvas.drawPoint(centerCanvasX - pixels[i][0],centerCanvasY - pixels[i][1], paint);
+            }
+
+            /* ...and draw it.
             canvas.drawBitmap(this.currentImage, 0, this.imageWidth, left, top, this.imageWidth,
-                    this.imageHeight, true, null);
+                    this.imageHeight, true, null);*/
         }
     }
 
