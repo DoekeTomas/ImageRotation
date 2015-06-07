@@ -9,6 +9,7 @@ package nl.uva.multimedia;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -53,35 +54,36 @@ public class ImageActivity extends Activity {
 
         /* Switching between sources: */
         sourceSpinner.setOnItemSelectedListener(
-            new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                switch (position) {
-                    case SOURCE_BACK_CAMERA:
-                        ImageActivity.this.cis.switchTo(CameraImageSource.BACK_CAMERA);
-                        ImageActivity.this.switchToCamera();
-                        break;
-                    case SOURCE_FRONT_CAMERA:
-                        ImageActivity.this.cis.switchTo(CameraImageSource.FRONT_CAMERA);
-                        ImageActivity.this.switchToCamera();
-                        break;
-                    case SOURCE_IMAGE:
-                        ImageActivity.this.switchToImage();
-                        break;
-                }
-            }
+                new AdapterView.OnItemSelectedListener() {
+                    @Override
+                    public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                        switch (position) {
+                            case SOURCE_BACK_CAMERA:
+                                ImageActivity.this.cis.switchTo(CameraImageSource.BACK_CAMERA);
+                                ImageActivity.this.switchToCamera();
+                                break;
+                            case SOURCE_FRONT_CAMERA:
+                                ImageActivity.this.cis.switchTo(CameraImageSource.FRONT_CAMERA);
+                                ImageActivity.this.switchToCamera();
+                                break;
+                            case SOURCE_IMAGE:
+                                ImageActivity.this.switchToImage();
+                                break;
+                        }
+                    }
 
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {}
-        });
+                    @Override
+                    public void onNothingSelected(AdapterView<?> parent) {
+                    }
+                });
 
         /* Freeze switch: */
         ((CompoundButton)findViewById(R.id.freeze_toggle)).setOnCheckedChangeListener(
-            new CompoundButton.OnCheckedChangeListener() {
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                ImageActivity.this.cis.setFrozen(isChecked);
-            }
-        });
+                new CompoundButton.OnCheckedChangeListener() {
+                    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                        ImageActivity.this.cis.setFrozen(isChecked);
+                    }
+                });
 
         /* "Load image" button: */
         findViewById(R.id.load_image_button).setOnClickListener(new View.OnClickListener() {
