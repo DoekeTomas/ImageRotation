@@ -14,6 +14,7 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -35,6 +36,8 @@ public class ImageActivity extends Activity {
 
     private CameraImageSource cis;
     private FileImageSource fis;
+
+    public static int rotationMethod = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,6 +103,24 @@ public class ImageActivity extends Activity {
 
         /* Select the back camera as default source: */
         sourceSpinner.setSelection(SOURCE_BACK_CAMERA);
+    }
+
+    /* Check welke methode is geselecteerd */
+    public void onMethodButtonClicked(View button) {
+        final ImageDisplayView imageView = (ImageDisplayView)findViewById(R.id.display_view);
+
+        switch(button.getId()) {
+            case R.id.nearestNeighbor:
+                rotationMethod = 1;
+                break;
+
+            case R.id.bilinear:
+                rotationMethod = 2;
+                break;
+        }
+
+        /* Roep ImageDisplayView.onDraw(Canvas canvas) aan */
+        imageView.invalidate();
     }
 
     private void switchToCamera() {

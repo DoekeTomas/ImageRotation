@@ -16,6 +16,8 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.View;
 
+import nl.uva.multimedia.ImageActivity;
+
 
 /*
  * This is a View that displays incoming images.
@@ -55,161 +57,212 @@ public class ImageDisplayView extends View implements ImageListener {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        // TODO: Hier wordt een afbeelding op het scherm laten zien!
-        // Je zou hier dus code kunnen plaatsen om iets anders weer te geven.
+        double rotation = Math.toRadians(45);
 
         /* If there is an image to be drawn: */
         if (this.currentImage != null) {
+            if (ImageActivity.rotationMethod == 1) {
+                /* Center van de canvas */
+                int canvasCenterX = this.getWidth() / 2;
+                int canvasCenterY = this.getHeight() / 2;
 
-            /* Width & Height */
-            int width   = this.imageWidth;
-            int height  = this.imageHeight;
+                /* Maak een 2D array voor de pixels van de output */
+                int canvasPixelsNr = this.getWidth() * this.getHeight();
+                int[][] output = new int[this.getWidth()][this.getHeight()];
 
-            double halfWidth = 0.5 * width;
-            double halfHeight = 0.5 * height;
+                /* Center van de afbeelding */
+                int imageCenterX = this.imageWidth / 2;
+                int imageCenterY = this.imageHeight / 2;
 
-            /* Center the image... */
-            int left    = (this.getWidth() - width) / 2;
-            int top     = (this.getHeight() - height) / 2;
+                /* Maak een 2D array voor de pixels van de input */
+                int imagePixelsNr = this.imageWidth * this.imageHeight;
+                int[][] input = new int[this.imageWidth][this.imageHeight];
 
-            /* Centerpoint of the image */
-            int xCenter = width / 2;
-            int yCenter = height / 2;
+                int imageX, imageY;
 
-            /* x & y declareren */
-            int x, y;
-            int x_in, y_in;
-            int x_floor, x_ceiling, y_floor, y_ceiling;
-            double x_inp, y_inp;
+                /* input[x,y] = color */
+                for (int i = 0; i < imagePixelsNr; i++) {
+                    imageX = i % this.imageWidth;
+                    imageY = i / this.imageWidth;
+                    input[imageX][imageY] = this.currentImage[i];
+                }
 
-            /* kleuren */
-            int[] topLeft       = new int[4];
-            int[] topRight      = new int[4];
-            int[] bottomLeft    = new int[4];
-            int[] bottomRight   = new int[4];
+                int[] outputRgba = new int[canvasPixelsNr];
+                int canvasX, canvasY, rotatedX, rotatedY;
 
-            /* interpolated waardes */
-            double[] interpolatedTop    = new double[4];
-            double[] interpolatedBottom = new double[4];
-            int[] interpolatedFinal     = new int[4];
+                for (int i = 0; i < canvasPixelsNr; i++) {
+                    canvasX = i % this.getWidth();
+                    canvasY = i / this.getHeight();
 
-            int pixels = width * height;
-            int[] output = new int[pixels];
+                    canvasX -= canvasCenterX;
+                    canvasY -= canvasCenterY;
 
-            int element;
-            int RGB;
+                    rotatedX = (int)(canvasX * Math.cos(rotation) + canvasY * Math.sin(rotation));
+                    rotatedY = (int)(-canvasX * Math.sin(rotation) + canvasY * Math.cos(rotation));
 
-            boolean billinear = true;
+                    canvasX += canvasCenterX;
+                    canvasY += canvasCenterY;
 
-            double rotation = Math.toRadians(10);
+                    rotatedX += imageCenterX;
+                    rotatedY += imageCenterY;
 
-            for (int i = 0; i < pixels; i++) {
-                if (billinear) {
-                    /* Omzetten naar cartesische coordinaten */
-                    x = i % width - xCenter;
-                    y = yCenter - i / width;
-
-                    /* Input coordinaten */
-                    x_inp = x * Math.cos(rotation) + y * Math.sin(rotation);
-                    y_inp = -x * Math.sin(rotation) + y * Math.cos(rotation);
-
-                    /* Cartesisch -> 2D-raster */
-                    x_inp = x_inp + halfWidth;
-                    y_inp = halfHeight - y_inp;
-
-                    /* Omliggende pixels */
-                    x_floor     = (int)Math.floor(x_inp);
-                    x_ceiling   = (int)Math.ceil(x_inp);
-                    y_floor     = (int)Math.floor(y_inp);
-                    y_ceiling   = (int)Math.ceil(y_inp);
-
-                    /* Check bereik & domein */
-                    if (x_floor < 0 || x_ceiling < 0 || y_floor < 0 || y_ceiling < 0 || x_floor >= width || x_ceiling >= width || y_floor >= height || y_ceiling >= height) {
-                        continue;
+                    if (rotatedX >= 0 && rotatedY >= 0 && rotatedX < this.imageWidth && rotatedY < this.imageHeight) {
+                        output[canvasX][canvasY] = input[rotatedX][rotatedY];
                     }
 
-                    /* Kleurwaardes toekennen */
-                    topLeft[0]  = Color.red(this.currentImage[(int) (x_floor + y_floor * width)]);
-                    topLeft[1]  = Color.green(this.currentImage[(int) (x_floor + y_floor * width)]);
-                    topLeft[2]  = Color.blue(this.currentImage[(int) (x_floor + y_floor * width)]);
-                    topLeft[3]  = Color.alpha(this.currentImage[(int) (x_floor + y_floor * width)]);
+                    /* 2D -> 1D */
+                    outputRgba[canvasY * this.getWidth() + canvasX] = output[canvasX][canvasY];
+                }
 
-                    topRight[0] = Color.red(this.currentImage[(int) (x_ceiling + y_floor * width)]);
-                    topRight[1] = Color.green(this.currentImage[(int) (x_ceiling + y_floor * width)]);
-                    topRight[2] = Color.blue(this.currentImage[(int) (x_ceiling + y_floor * width)]);
-                    topRight[3] = Color.alpha(this.currentImage[(int) (x_ceiling + y_floor * width)]);
+                canvas.drawBitmap(outputRgba, 0, this.getWidth(), 0, 0, this.getWidth(), this.getHeight(), true, null);
+            }
 
-                    bottomLeft[0] = Color.red(this.currentImage[(int) (x_floor + y_ceiling * width)]);
-                    bottomLeft[1] = Color.green(this.currentImage[(int) (x_floor + y_ceiling * width)]);
-                    bottomLeft[2] = Color.blue(this.currentImage[(int) (x_floor + y_ceiling * width)]);
-                    bottomLeft[3] = Color.alpha(this.currentImage[(int) (x_floor + y_ceiling * width)]);
+            else {
+                /* Width & Height */
+                int width = this.imageWidth;
+                int height = this.imageHeight;
 
-                    bottomRight[0] = Color.red(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
-                    bottomRight[1] = Color.green(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
-                    bottomRight[2] = Color.blue(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
-                    bottomRight[3] = Color.alpha(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
+                double halfWidth = 0.5 * width;
+                double halfHeight = 0.5 * height;
 
-                    /* Interpoleer de bovenste punten */
+                /* Center the image... */
+                int left = (this.getWidth() - width) / 2;
+                int top = (this.getHeight() - height) / 2;
 
-                    for (int j = 0; j < 4; j++ ) {
-                        interpolatedTop[j] = (1 - x_inp - x_floor) * topLeft[j] + (x_inp - x_floor) * topRight[j];
-                    }
+                /* Centerpoint of the image */
+                int xCenter = width / 2;
+                int yCenter = height / 2;
 
-                    /* Interpoleer de onderste punten */
+                /* x & y declareren */
+                int x, y;
+                int x_in, y_in;
+                int x_floor, x_ceiling, y_floor, y_ceiling;
+                double x_inp, y_inp;
 
-                    for (int j = 0; j < 4; j++ ) {
-                        interpolatedBottom[j] = (1 - x_inp - x_floor) * bottomLeft[j] + (x_inp - x_floor) * bottomRight[j];
-                    }
+                /* kleuren */
+                int[] topLeft = new int[4];
+                int[] topRight = new int[4];
+                int[] bottomLeft = new int[4];
+                int[] bottomRight = new int[4];
 
-                    /* Interpoleer de geinterpoleerde waardes nog eens */
-                    for (int j = 0; j < 4; j++) {
-                        interpolatedFinal[j] = (int)(Math.round((1 - y_inp - y_floor) * interpolatedTop[j] + (y_inp - y_floor) * interpolatedBottom[j]));
+                /* interpolated waardes */
+                double[] interpolatedTop = new double[4];
+                double[] interpolatedBottom = new double[4];
+                int[] interpolatedFinal = new int[4];
 
+                int pixels = width * height;
+                int[] output = new int[pixels];
 
-                        /* Check bereik */
-                        if (interpolatedFinal[j] < 0 && j < 3) {
-                            interpolatedFinal[j] = 0;
+                int element;
+                int RGB;
+
+                boolean billinear = true;
+
+                for (int i = 0; i < pixels; i++) {
+                    if (billinear) {
+                        /* Omzetten naar cartesische coordinaten */
+                        x = i % width - xCenter;
+                        y = yCenter - i / width;
+
+                        /* Input coordinaten */
+                        x_inp = x * Math.cos(rotation) + y * Math.sin(rotation);
+                        y_inp = -x * Math.sin(rotation) + y * Math.cos(rotation);
+
+                        /* Cartesisch -> 2D-raster */
+                        x_inp = x_inp + halfWidth;
+                        y_inp = halfHeight - y_inp;
+
+                        /* Omliggende pixels */
+                        x_floor = (int) Math.floor(x_inp);
+                        x_ceiling = (int) Math.ceil(x_inp);
+                        y_floor = (int) Math.floor(y_inp);
+                        y_ceiling = (int) Math.ceil(y_inp);
+
+                        /* Check bereik & domein */
+                        if (x_floor < 0 || x_ceiling < 0 || y_floor < 0 || y_ceiling < 0 || x_floor >= width || x_ceiling >= width || y_floor >= height || y_ceiling >= height) {
+                            continue;
                         }
-                        else if(interpolatedFinal[j] > 255 && j < 3) {
-                            interpolatedFinal[j] = 255;
+
+                        /* Kleurwaardes toekennen */
+                        topLeft[0] = Color.red(this.currentImage[(int) (x_floor + y_floor * width)]);
+                        topLeft[1] = Color.green(this.currentImage[(int) (x_floor + y_floor * width)]);
+                        topLeft[2] = Color.blue(this.currentImage[(int) (x_floor + y_floor * width)]);
+                        topLeft[3] = Color.alpha(this.currentImage[(int) (x_floor + y_floor * width)]);
+
+                        topRight[0] = Color.red(this.currentImage[(int) (x_ceiling + y_floor * width)]);
+                        topRight[1] = Color.green(this.currentImage[(int) (x_ceiling + y_floor * width)]);
+                        topRight[2] = Color.blue(this.currentImage[(int) (x_ceiling + y_floor * width)]);
+                        topRight[3] = Color.alpha(this.currentImage[(int) (x_ceiling + y_floor * width)]);
+
+                        bottomLeft[0] = Color.red(this.currentImage[(int) (x_floor + y_ceiling * width)]);
+                        bottomLeft[1] = Color.green(this.currentImage[(int) (x_floor + y_ceiling * width)]);
+                        bottomLeft[2] = Color.blue(this.currentImage[(int) (x_floor + y_ceiling * width)]);
+                        bottomLeft[3] = Color.alpha(this.currentImage[(int) (x_floor + y_ceiling * width)]);
+
+                        bottomRight[0] = Color.red(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
+                        bottomRight[1] = Color.green(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
+                        bottomRight[2] = Color.blue(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
+                        bottomRight[3] = Color.alpha(this.currentImage[(int) (x_ceiling + y_ceiling * width)]);
+
+                        /* Interpoleer de bovenste punten */
+
+                        for (int j = 0; j < 4; j++) {
+                            interpolatedTop[j] = (1 - x_inp - x_floor) * topLeft[j] + (x_inp - x_floor) * topRight[j];
                         }
-                        else if(interpolatedFinal[j] < 0 && j == 3) {
-                            interpolatedFinal[j] = 0;
+
+                        /* Interpoleer de onderste punten */
+
+                        for (int j = 0; j < 4; j++) {
+                            interpolatedBottom[j] = (1 - x_inp - x_floor) * bottomLeft[j] + (x_inp - x_floor) * bottomRight[j];
                         }
-                        else if(interpolatedFinal[j] > 255 && j ==3) {
-                            interpolatedFinal[j] = 255;
+
+                        /* Interpoleer de geinterpoleerde waardes nog eens */
+                        for (int j = 0; j < 4; j++) {
+                            interpolatedFinal[j] = (int) (Math.round((1 - y_inp - y_floor) * interpolatedTop[j] + (y_inp - y_floor) * interpolatedBottom[j]));
+
+
+                            /* Check bereik */
+                            if (interpolatedFinal[j] < 0 && j < 3) {
+                                interpolatedFinal[j] = 0;
+                            } else if (interpolatedFinal[j] > 255 && j < 3) {
+                                interpolatedFinal[j] = 255;
+                            } else if (interpolatedFinal[j] < 0 && j == 3) {
+                                interpolatedFinal[j] = 0;
+                            } else if (interpolatedFinal[j] > 255 && j == 3) {
+                                interpolatedFinal[j] = 255;
+                            }
                         }
-                    }
 
-                    RGB = interpolatedFinal[3] << 24 | interpolatedFinal[0] << 16 | interpolatedFinal[1] << 8 | interpolatedFinal[2];
+                        RGB = interpolatedFinal[3] << 24 | interpolatedFinal[0] << 16 | interpolatedFinal[1] << 8 | interpolatedFinal[2];
 
-                    output[i] = RGB;
+                        output[i] = RGB;
 
-                } else {
-                    /* Omzetten naar cartesische coordinaten */
-                    x = i % width - xCenter;
-                    y = yCenter - i / width;
+                    } else {
+                        /* Omzetten naar cartesische coordinaten */
+                        x = i % width - xCenter;
+                        y = yCenter - i / width;
 
 
-                    /* Input coordinaten */
-                    x_in = (int) (x * Math.cos(rotation) + y * Math.sin(rotation));
-                    y_in = (int) (-x * Math.sin(rotation) + y * Math.cos(rotation));
+                        /* Input coordinaten */
+                        x_in = (int) (x * Math.cos(rotation) + y * Math.sin(rotation));
+                        y_in = (int) (-x * Math.sin(rotation) + y * Math.cos(rotation));
 
-                    /* Als ze buiten bereik vallen */
-                    if (x_in < -halfWidth || x_in > halfWidth || y_in < -halfHeight || y_in > halfHeight) {
-                        output[i] = Color.YELLOW;
-                    }
+                        /* Als ze buiten bereik vallen */
+                        if (x_in < -halfWidth || x_in > halfWidth || y_in < -halfHeight || y_in > halfHeight) {
+                            output[i] = Color.YELLOW;
+                        }
 
-                    /* Cartesische coordinaten -> 1D-array */
-                    element = (int) ((0.5 * height - y_in) * width + 0.5 * width + x_in);
+                        /* Cartesische coordinaten -> 1D-array */
+                        element = (int) ((0.5 * height - y_in) * width + 0.5 * width + x_in);
 
-                    if (element < pixels && element > 0) {
-                        output[i] = this.currentImage[element];
+                        if (element < pixels && element > 0) {
+                            output[i] = this.currentImage[element];
+                        }
                     }
                 }
+                canvas.drawBitmap(output, 0, width, left, top - 100, width, height, true, null);
+                canvas.drawBitmap(this.currentImage, 0, width, left, top + height, width, height, true, null);
             }
-            canvas.drawBitmap(output, 0, width, left, top - 100, width, height, true, null);
-            canvas.drawBitmap(this.currentImage, 0 , width, left, top + height, width, height, true, null);
         }
     }
 

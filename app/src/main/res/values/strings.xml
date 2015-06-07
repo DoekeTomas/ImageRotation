@@ -15,4 +15,7 @@
     <string name="play_icon">▶</string>
     <string name="pause_icon">❘❘</string>
     <string name="rewind_icon">◀◀</string>
+    <string name="NearestNeighbor">Nearest Neighbor Interpolation</string>
+    <string name="bilinear">Bilinear Interpolation</string>
+    <string name="loadButton">Load image</string>
 </resources>
