@@ -132,7 +132,7 @@ public class ImageDisplayView extends View implements ImageListener {
                     topLeft[0]  = Color.red(this.currentImage[(int) (x_floor + y_floor * width)]);
                     topLeft[1]  = Color.green(this.currentImage[(int) (x_floor + y_floor * width)]);
                     topLeft[2]  = Color.blue(this.currentImage[(int) (x_floor + y_floor * width)]);
-                    topLeft[3] = Color.alpha(this.currentImage[(int) (x_floor + y_floor * width)]);
+                    topLeft[3]  = Color.alpha(this.currentImage[(int) (x_floor + y_floor * width)]);
 
                     topRight[0] = Color.red(this.currentImage[(int) (x_ceiling + y_floor * width)]);
                     topRight[1] = Color.green(this.currentImage[(int) (x_ceiling + y_floor * width)]);
@@ -173,13 +173,15 @@ public class ImageDisplayView extends View implements ImageListener {
                         else if(interpolatedFinal[j] > 255 && j < 3) {
                             interpolatedFinal[j] = 255;
                         }
-                        else if(j == 3) {
+                        else if(interpolatedFinal[j] < 0 && j == 3) {
                             interpolatedFinal[j] = 0;
                         }
-
+                        else if(interpolatedFinal[j] > 255 && j ==3) {
+                            interpolatedFinal[j] = 255;
+                        }
                     }
 
-                    RGB = interpolatedFinal[0] << 16 | interpolatedFinal[1] << 8 | interpolatedFinal[2];
+                    RGB = interpolatedFinal[3] << 24 | interpolatedFinal[0] << 16 | interpolatedFinal[1] << 8 | interpolatedFinal[2];
 
                     output[i] = RGB;
 
@@ -206,7 +208,7 @@ public class ImageDisplayView extends View implements ImageListener {
                     }
                 }
             }
-            canvas.drawBitmap(output, 0, width, left, top - 100, width, height, false, null);
+            canvas.drawBitmap(output, 0, width, left, top - 100, width, height, true, null);
             canvas.drawBitmap(this.currentImage, 0 , width, left, top + height, width, height, true, null);
         }
     }
