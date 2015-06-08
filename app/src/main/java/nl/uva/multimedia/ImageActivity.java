@@ -15,7 +15,9 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.RadioButton;
+import android.widget.SeekBar;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.FileNotFoundException;
@@ -38,20 +40,48 @@ public class ImageActivity extends Activity {
     private FileImageSource fis;
 
     public static int rotationMethod = 1;
+    public static int rotation = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // TODO: Dit is het "beginpunt" van de applicatie!
-        // Als je vanaf hier de code stap voor stap doorloopt zul je alles tegen moeten komen.
-        // De layout is gedefiniëerd in res/layout/activity_image.xml, dit wordt ingesteld via
-        // this.setContentView() hieronder.
 
         super.onCreate(savedInstanceState);
         this.setContentView(R.layout.activity_image);
+        final ImageDisplayView imageView = (ImageDisplayView)findViewById(R.id.display_view);
 
         /* Create sources: */
         this.cis = new CameraImageSource(this);
         this.fis = new FileImageSource();
+
+        /* Initialiseer de slider */
+        SeekBar seekBar = (SeekBar)this.findViewById(R.id.seekBar);
+        seekBar.setProgress(0);
+
+        final TextView textRotation = (TextView)this.findViewById(R.id.textRotation);
+
+        seekBar.setOnSeekBarChangeListener (
+                new SeekBar.OnSeekBarChangeListener() {
+
+                    /* Check of slider is veranderd */
+                    @Override
+                    public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                        rotation = (int)(i * 3.6);
+                        textRotation.setText("Rotation: " + Integer.toString(rotation) + "º");
+
+                        /* Roep ImageDisplayView.onDraw(Canvas canvas) aan */
+                        imageView.invalidate();
+                    }
+
+                    @Override
+                    public void onStartTrackingTouch(SeekBar seekBar) {
+
+                    }
+
+                    @Override
+                    public void onStopTrackingTouch(SeekBar seekBar) {
+
+                    }
+                });
 
         Spinner sourceSpinner = (Spinner)this.findViewById(R.id.source_spinner);
 

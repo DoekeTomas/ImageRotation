@@ -57,18 +57,11 @@ public class ImageDisplayView extends View implements ImageListener {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        double rotation = Math.toRadians(45);
+        double rotation = Math.toRadians(ImageActivity.rotation);
 
         /* If there is an image to be drawn: */
         if (this.currentImage != null) {
             if (ImageActivity.rotationMethod == 1) {
-                /* Center van de canvas */
-                int canvasCenterX = this.getWidth() / 2;
-                int canvasCenterY = this.getHeight() / 2;
-
-                /* Maak een 2D array voor de pixels van de output */
-                int canvasPixelsNr = this.getWidth() * this.getHeight();
-                int[][] output = new int[this.getWidth()][this.getHeight()];
 
                 /* Center van de afbeelding */
                 int imageCenterX = this.imageWidth / 2;
@@ -87,34 +80,53 @@ public class ImageDisplayView extends View implements ImageListener {
                     input[imageX][imageY] = this.currentImage[i];
                 }
 
-                int[] outputRgba = new int[canvasPixelsNr];
-                int canvasX, canvasY, rotatedX, rotatedY;
+                int outputWidth, outputHeight;
+                if (this.imageWidth > this.imageHeight)
+                    outputWidth = outputHeight = (int)(this.imageWidth * 1.3);
+                else
+                    outputWidth = outputHeight = (int)(this.imageHeight * 1.3);
 
-                for (int i = 0; i < canvasPixelsNr; i++) {
-                    canvasX = i % this.getWidth();
-                    canvasY = i / this.getHeight();
+                /* Center van de output */
+                int outputCenterX = outputWidth / 2;
+                int outputCenterY = outputHeight / 2;
 
-                    canvasX -= canvasCenterX;
-                    canvasY -= canvasCenterY;
+                /* Maak een 2D array voor de pixels van de output */
+                int outputPixelsNr = outputWidth * outputHeight;
+                int[][] output = new int[outputWidth][outputHeight];
 
-                    rotatedX = (int)(canvasX * Math.cos(rotation) + canvasY * Math.sin(rotation));
-                    rotatedY = (int)(-canvasX * Math.sin(rotation) + canvasY * Math.cos(rotation));
+                int[] outputRgba = new int[outputPixelsNr];
+                int outputX, outputY, rotatedX, rotatedY;
 
-                    canvasX += canvasCenterX;
-                    canvasY += canvasCenterY;
+                for (int i = 0; i < outputPixelsNr; i++) {
+                    outputX = i % outputWidth;
+                    outputY = i / outputHeight;
+
+                    outputX -= outputCenterX;
+                    outputY -= outputCenterY;
+
+                    /* Bereken de inverse van de rotatie */
+                    rotatedX = (int)(outputX * Math.cos(rotation) + outputY * Math.sin(rotation));
+                    rotatedY = (int)(-outputX * Math.sin(rotation) + outputY * Math.cos(rotation));
+
+                    outputX += outputCenterX;
+                    outputY += outputCenterY;
 
                     rotatedX += imageCenterX;
                     rotatedY += imageCenterY;
 
                     if (rotatedX >= 0 && rotatedY >= 0 && rotatedX < this.imageWidth && rotatedY < this.imageHeight) {
-                        output[canvasX][canvasY] = input[rotatedX][rotatedY];
+                        output[outputX][outputY] = input[rotatedX][rotatedY];
                     }
 
                     /* 2D -> 1D */
-                    outputRgba[canvasY * this.getWidth() + canvasX] = output[canvasX][canvasY];
+                    if (outputX >= 0 && outputY >= 0 && outputX < outputWidth && outputY < outputHeight) {
+                        outputRgba[outputY * outputWidth + outputX] = output[outputX][outputY];
+                    }
                 }
 
-                canvas.drawBitmap(outputRgba, 0, this.getWidth(), 0, 0, this.getWidth(), this.getHeight(), true, null);
+                int top = (this.getWidth() - outputWidth) / 2;
+                int left = (this.getHeight() - outputHeight) / 2;
+                canvas.drawBitmap(outputRgba, 0, outputWidth, left, top, outputWidth, outputHeight, true, null);
             }
 
             else {
